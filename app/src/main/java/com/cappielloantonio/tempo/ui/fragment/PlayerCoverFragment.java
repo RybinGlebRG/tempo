@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.media3.common.MediaItem;
 import androidx.media3.common.MediaMetadata;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
@@ -22,6 +23,7 @@ import androidx.media3.session.SessionToken;
 import com.cappielloantonio.tempo.databinding.InnerFragmentPlayerCoverBinding;
 import com.cappielloantonio.tempo.glide.CustomGlideRequest;
 import com.cappielloantonio.tempo.model.Download;
+import com.cappielloantonio.tempo.service.ExportService;
 import com.cappielloantonio.tempo.service.MediaManager;
 import com.cappielloantonio.tempo.service.MediaService;
 import com.cappielloantonio.tempo.ui.dialog.PlaylistChooserDialog;
@@ -147,6 +149,11 @@ public class PlayerCoverFragment extends Fragment {
                             playerBottomSheetFragment.goToLyricsPage();
                         }
                     }
+                });
+
+                bind.innerButtonExport.setOnClickListener(view -> {
+                    ExportService exportService = new ExportService(requireContext(), requireActivity());
+                    exportService.exportMedia(song);
                 });
             }
         });

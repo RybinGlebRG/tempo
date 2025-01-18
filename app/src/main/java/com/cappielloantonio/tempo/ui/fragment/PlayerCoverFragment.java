@@ -9,11 +9,11 @@ import android.transition.TransitionManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.media3.common.MediaItem;
 import androidx.media3.common.MediaMetadata;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
@@ -23,7 +23,7 @@ import androidx.media3.session.SessionToken;
 import com.cappielloantonio.tempo.databinding.InnerFragmentPlayerCoverBinding;
 import com.cappielloantonio.tempo.glide.CustomGlideRequest;
 import com.cappielloantonio.tempo.model.Download;
-import com.cappielloantonio.tempo.service.ExportService;
+import com.cappielloantonio.tempo.service.export.Exporter;
 import com.cappielloantonio.tempo.service.MediaManager;
 import com.cappielloantonio.tempo.service.MediaService;
 import com.cappielloantonio.tempo.ui.dialog.PlaylistChooserDialog;
@@ -152,8 +152,12 @@ public class PlayerCoverFragment extends Fragment {
                 });
 
                 bind.innerButtonExport.setOnClickListener(view -> {
-                    ExportService exportService = new ExportService(requireContext(), requireActivity());
-                    exportService.exportMedia(song);
+                    try {
+                        Exporter exporter = new Exporter(requireContext(), requireActivity());
+                        exporter.exportMedia(song);
+                    } catch (Exception e){
+                        Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
                 });
             }
         });

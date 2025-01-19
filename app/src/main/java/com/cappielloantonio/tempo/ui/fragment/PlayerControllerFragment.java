@@ -417,9 +417,9 @@ public class PlayerControllerFragment extends Fragment {
                             }
                         }
                         return true;
+                    } else {
+                        return false;
                     }
-
-                    return false;
                 });
 
                 // Should only be enabled for songs

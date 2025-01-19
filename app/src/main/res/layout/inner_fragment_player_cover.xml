@@ -59,23 +59,6 @@
             app:layout_constraintEnd_toStartOf="@+id/vertical_guideline" />
 
         <Button
-            android:id="@+id/inner_button_export"
-            style="@style/Widget.Material3.Button.TonalButton.Icon"
-            android:layout_width="112dp"
-            android:layout_height="52dp"
-            android:layout_marginStart="-56dp"
-            android:layout_marginTop="64dp"
-            android:insetLeft="0dp"
-            android:insetTop="0dp"
-            android:insetRight="0dp"
-            android:insetBottom="0dp"
-            android:text="@string/song_button_export"
-            app:cornerRadius="30dp"
-            app:icon="@drawable/ic_download"
-            app:layout_constraintStart_toStartOf="@+id/vertical_guideline"
-            app:layout_constraintTop_toTopOf="@+id/horizontal_guideline" />
-
-        <Button
             android:id="@+id/inner_button_top_right"
             style="@style/Widget.Material3.Button.TonalButton.Icon"
             android:layout_width="52dp"

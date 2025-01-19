@@ -7,10 +7,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.PopupMenu;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -27,6 +30,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.cappielloantonio.tempo.R;
 import com.cappielloantonio.tempo.databinding.InnerFragmentPlayerControllerBinding;
 import com.cappielloantonio.tempo.service.MediaService;
+import com.cappielloantonio.tempo.service.export.Exporter;
 import com.cappielloantonio.tempo.ui.activity.MainActivity;
 import com.cappielloantonio.tempo.ui.dialog.RatingDialog;
 import com.cappielloantonio.tempo.ui.dialog.TrackInfoDialog;
@@ -62,6 +66,7 @@ public class PlayerControllerFragment extends Fragment {
     private MainActivity activity;
     private PlayerBottomSheetViewModel playerBottomSheetViewModel;
     private ListenableFuture<MediaBrowser> mediaBrowserListenableFuture;
+    private String currentMediaType;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -78,6 +83,7 @@ public class PlayerControllerFragment extends Fragment {
         initMediaListenable();
         initMediaLabelButton();
         initArtistLabelButton();
+        initContextMenu();
 
         return view;
     }
@@ -207,7 +213,8 @@ public class PlayerControllerFragment extends Fragment {
         initPlaybackSpeedButton(mediaBrowser);
 
         if (mediaBrowser.getMediaMetadata().extras != null) {
-            switch (mediaBrowser.getMediaMetadata().extras.getString("type", Constants.MEDIA_TYPE_MUSIC)) {
+            currentMediaType = mediaBrowser.getMediaMetadata().extras.getString("type", Constants.MEDIA_TYPE_MUSIC);
+            switch (currentMediaType) {
                 case Constants.MEDIA_TYPE_PODCAST:
                     bind.getRoot().setShowShuffleButton(false);
                     bind.getRoot().setShowRewindButton(true);
@@ -218,9 +225,6 @@ public class PlayerControllerFragment extends Fragment {
                     bind.getRoot().findViewById(R.id.player_playback_speed_button).setVisibility(View.VISIBLE);
                     bind.getRoot().findViewById(R.id.player_skip_silence_toggle_button).setVisibility(View.VISIBLE);
                     bind.getRoot().findViewById(R.id.button_favorite).setVisibility(View.GONE);
-
-                    // Should only be visible for songs
-                    bind.getRoot().findViewById(R.id.inner_button_export).setVisibility(View.GONE);
 
                     setPlaybackParameters(mediaBrowser);
                     break;
@@ -235,9 +239,6 @@ public class PlayerControllerFragment extends Fragment {
                     bind.getRoot().findViewById(R.id.player_skip_silence_toggle_button).setVisibility(View.GONE);
                     bind.getRoot().findViewById(R.id.button_favorite).setVisibility(View.GONE);
 
-                    // Should only be visible for songs
-                    bind.getRoot().findViewById(R.id.inner_button_export).setVisibility(View.GONE);
-
                     setPlaybackParameters(mediaBrowser);
                     break;
                 case Constants.MEDIA_TYPE_MUSIC:
@@ -251,9 +252,6 @@ public class PlayerControllerFragment extends Fragment {
                     bind.getRoot().findViewById(R.id.player_playback_speed_button).setVisibility(View.GONE);
                     bind.getRoot().findViewById(R.id.player_skip_silence_toggle_button).setVisibility(View.GONE);
                     bind.getRoot().findViewById(R.id.button_favorite).setVisibility(View.VISIBLE);
-
-                    // Should only be visible for songs
-                    bind.getRoot().findViewById(R.id.inner_button_export).setVisibility(View.VISIBLE);
 
                     resetPlaybackParameters(mediaBrowser);
                     break;
@@ -397,5 +395,37 @@ public class PlayerControllerFragment extends Fragment {
     private void resetPlaybackParameters(MediaBrowser mediaBrowser) {
         mediaBrowser.setPlaybackParameters(new PlaybackParameters(Constants.MEDIA_PLAYBACK_SPEED_100));
         // TODO Resettare lo skip del silenzio
+    }
+
+    private void initContextMenu(){
+        AppCompatImageButton contextMenuButton = bind.getRoot().findViewById(R.id.button_popup_menu);
+        contextMenuButton.setOnClickListener(view -> {
+            PopupMenu popupMenu = new PopupMenu(requireActivity(), contextMenuButton);
+            popupMenu.getMenuInflater().inflate(R.menu.player_popup_menu, popupMenu.getMenu());
+
+            popupMenu.setOnMenuItemClickListener(menuItem -> {
+
+                if (menuItem.getItemId() == R.id.player_context_menu_export){
+                    playerBottomSheetViewModel.getLiveMedia().observe(getViewLifecycleOwner(), media -> {
+                        if (media != null) {
+                            try {
+                                Exporter exporter = new Exporter(requireContext(), requireActivity());
+                                exporter.exportMedia(media);
+                            } catch (Exception e){
+                                Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    });
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+
+            // Should only be enabled for songs
+            popupMenu.getMenu().findItem(R.id.player_context_menu_export).setEnabled(Objects.equals(currentMediaType, Constants.MEDIA_TYPE_MUSIC));
+
+            popupMenu.show();
+        });
     }
 }

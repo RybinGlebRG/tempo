@@ -150,15 +150,6 @@ public class PlayerCoverFragment extends Fragment {
                         }
                     }
                 });
-
-                bind.innerButtonExport.setOnClickListener(view -> {
-                    try {
-                        Exporter exporter = new Exporter(requireContext(), requireActivity());
-                        exporter.exportMedia(song);
-                    } catch (Exception e){
-                        Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                });
             }
         });
     }

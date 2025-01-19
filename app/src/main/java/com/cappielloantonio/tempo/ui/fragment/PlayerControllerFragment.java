@@ -83,7 +83,7 @@ public class PlayerControllerFragment extends Fragment {
         initMediaListenable();
         initMediaLabelButton();
         initArtistLabelButton();
-        initContextMenu();
+        initPopupMenu();
 
         return view;
     }
@@ -397,35 +397,36 @@ public class PlayerControllerFragment extends Fragment {
         // TODO Resettare lo skip del silenzio
     }
 
-    private void initContextMenu(){
-        AppCompatImageButton contextMenuButton = bind.getRoot().findViewById(R.id.button_popup_menu);
-        contextMenuButton.setOnClickListener(view -> {
-            PopupMenu popupMenu = new PopupMenu(requireActivity(), contextMenuButton);
-            popupMenu.getMenuInflater().inflate(R.menu.player_popup_menu, popupMenu.getMenu());
+    // Recreate popup menu for each Child
+    private void initPopupMenu(){
+        playerBottomSheetViewModel.getLiveMedia().observe(getViewLifecycleOwner(), media -> {
+            AppCompatImageButton contextMenuButton = bind.getRoot().findViewById(R.id.button_popup_menu);
+            contextMenuButton.setOnClickListener(view -> {
+                PopupMenu popupMenu = new PopupMenu(requireActivity(), contextMenuButton);
+                popupMenu.getMenuInflater().inflate(R.menu.player_popup_menu, popupMenu.getMenu());
 
-            popupMenu.setOnMenuItemClickListener(menuItem -> {
+                popupMenu.setOnMenuItemClickListener(menuItem -> {
 
-                if (menuItem.getItemId() == R.id.player_context_menu_export){
-                    playerBottomSheetViewModel.getLiveMedia().observe(getViewLifecycleOwner(), media -> {
+                    if (menuItem.getItemId() == R.id.player_context_menu_export) {
                         if (media != null) {
                             try {
                                 Exporter exporter = new Exporter(requireContext(), requireActivity());
                                 exporter.exportMedia(media);
-                            } catch (Exception e){
+                            } catch (Exception e) {
                                 Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_LONG).show();
                             }
                         }
-                    });
-                    return true;
-                } else {
+                        return true;
+                    }
+
                     return false;
-                }
+                });
+
+                // Should only be enabled for songs
+                popupMenu.getMenu().findItem(R.id.player_context_menu_export).setEnabled(Objects.equals(currentMediaType, Constants.MEDIA_TYPE_MUSIC));
+
+                popupMenu.show();
             });
-
-            // Should only be enabled for songs
-            popupMenu.getMenu().findItem(R.id.player_context_menu_export).setEnabled(Objects.equals(currentMediaType, Constants.MEDIA_TYPE_MUSIC));
-
-            popupMenu.show();
         });
     }
 }

@@ -1,5 +1,7 @@
 package com.cappielloantonio.tempo.ui.fragment;
 
+import static android.media.MediaMetadata.METADATA_KEY_MEDIA_ID;
+
 import android.content.ComponentName;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -13,10 +15,12 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.media3.common.MediaItem;
 import androidx.media3.common.MediaMetadata;
 import androidx.media3.common.PlaybackParameters;
 import androidx.media3.common.Player;
@@ -66,7 +70,6 @@ public class PlayerControllerFragment extends Fragment {
     private MainActivity activity;
     private PlayerBottomSheetViewModel playerBottomSheetViewModel;
     private ListenableFuture<MediaBrowser> mediaBrowserListenableFuture;
-    private String currentMediaType;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -83,7 +86,6 @@ public class PlayerControllerFragment extends Fragment {
         initMediaListenable();
         initMediaLabelButton();
         initArtistLabelButton();
-        initPopupMenu();
 
         return view;
     }
@@ -166,6 +168,12 @@ public class PlayerControllerFragment extends Fragment {
                 setMetadata(mediaMetadata);
                 setMediaInfo(mediaMetadata);
             }
+
+            @Override
+            public void onMediaItemTransition(@Nullable MediaItem mediaItem, @Player.MediaItemTransitionReason int reason){
+                // TODO: feature toggle
+                setPopupMenu(mediaItem);
+            }
         });
     }
 
@@ -213,8 +221,7 @@ public class PlayerControllerFragment extends Fragment {
         initPlaybackSpeedButton(mediaBrowser);
 
         if (mediaBrowser.getMediaMetadata().extras != null) {
-            currentMediaType = mediaBrowser.getMediaMetadata().extras.getString("type", Constants.MEDIA_TYPE_MUSIC);
-            switch (currentMediaType) {
+            switch (mediaBrowser.getMediaMetadata().extras.getString("type", Constants.MEDIA_TYPE_MUSIC)) {
                 case Constants.MEDIA_TYPE_PODCAST:
                     bind.getRoot().setShowShuffleButton(false);
                     bind.getRoot().setShowRewindButton(true);
@@ -397,36 +404,52 @@ public class PlayerControllerFragment extends Fragment {
         // TODO Resettare lo skip del silenzio
     }
 
-    // Recreate popup menu for each Child
-    private void initPopupMenu(){
-        playerBottomSheetViewModel.getLiveMedia().observe(getViewLifecycleOwner(), media -> {
-            AppCompatImageButton contextMenuButton = bind.getRoot().findViewById(R.id.button_popup_menu);
-            contextMenuButton.setOnClickListener(view -> {
-                PopupMenu popupMenu = new PopupMenu(requireActivity(), contextMenuButton);
-                popupMenu.getMenuInflater().inflate(R.menu.player_popup_menu, popupMenu.getMenu());
+    /**
+     * <p>Setting up popup menu for {@link MediaItem}.</p>
+     */
+    private void setPopupMenu(@Nullable MediaItem mediaItem){
+        if (mediaItem != null && mediaItem.mediaMetadata.extras != null) {
 
-                popupMenu.setOnMenuItemClickListener(menuItem -> {
+            // Show popup menu only for songs
+            String currentMediaType = mediaItem.mediaMetadata.extras.getString("type", Constants.MEDIA_TYPE_MUSIC);
+            if (Objects.equals(currentMediaType, Constants.MEDIA_TYPE_MUSIC)){
 
-                    if (menuItem.getItemId() == R.id.player_context_menu_export) {
-                        if (media != null) {
+                // Get popup menu button
+                AppCompatImageButton contextMenuButton = bind.getRoot().findViewById(R.id.button_popup_menu);
+
+                // Make it visible in case it has been hidden
+                contextMenuButton.setVisibility(View.VISIBLE);
+
+                // Set onClick handler
+                contextMenuButton.setOnClickListener(view -> {
+                    PopupMenu popupMenu = new PopupMenu(requireActivity(), contextMenuButton);
+                    popupMenu.getMenuInflater().inflate(R.menu.player_popup_menu, popupMenu.getMenu());
+
+                    popupMenu.setOnMenuItemClickListener(menuItem -> {
+
+                        // Set handler for export button
+                        if (menuItem.getItemId() == R.id.player_context_menu_export) {
                             try {
                                 Exporter exporter = new Exporter(requireContext(), requireActivity());
-                                exporter.exportMedia(media);
+                                exporter.exportMedia(mediaItem);
                             } catch (Exception e) {
                                 Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_LONG).show();
                             }
+                            return true;
+                        } else {
+                            return false;
                         }
-                        return true;
-                    } else {
-                        return false;
-                    }
+                    });
+
+                    popupMenu.show();
                 });
 
-                // Should only be enabled for songs
-                popupMenu.getMenu().findItem(R.id.player_context_menu_export).setEnabled(Objects.equals(currentMediaType, Constants.MEDIA_TYPE_MUSIC));
+                return;
+            }
+        }
 
-                popupMenu.show();
-            });
-        });
+        // Hide popup menu button if conditions are not satisfied
+        AppCompatImageButton contextMenuButton = bind.getRoot().findViewById(R.id.button_popup_menu);
+        contextMenuButton.setVisibility(View.GONE);
     }
 }

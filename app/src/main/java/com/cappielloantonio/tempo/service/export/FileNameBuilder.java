@@ -1,5 +1,7 @@
 package com.cappielloantonio.tempo.service.export;
 
+import androidx.media3.common.MediaItem;
+
 import com.cappielloantonio.tempo.subsonic.models.Child;
 
 import java.nio.file.Path;
@@ -15,27 +17,27 @@ import java.util.stream.Collectors;
  */
 public class FileNameBuilder {
 
-    private Child media;
+    private MediaItem mediaItem;
 
-    public FileNameBuilder media(Child media) {
-        this.media = media;
+    public FileNameBuilder mediaItem(MediaItem mediaItem) {
+        this.mediaItem = mediaItem;
         return this;
     }
 
     public String build() {
-        Objects.requireNonNull(media);
+        Objects.requireNonNull(mediaItem);
 
         StringBuilder fileNameBuilder = new StringBuilder();
 
-        String title = media.getTitle();
-        String artist = media.getArtist();
-        String suffix = media.getSuffix();
+        String title = mediaItem.mediaMetadata.title != null ? mediaItem.mediaMetadata.title.toString() : null;
+        String artist = mediaItem.mediaMetadata.artist != null ? mediaItem.mediaMetadata.artist.toString() : null;
+        String suffix = mediaItem.mediaMetadata.extras != null ? mediaItem.mediaMetadata.extras.getString("suffix") : null;
 
         // Sometimes title can consist of path to file on server. Most likely when there is no metadata in files
         boolean isTitleContainsPath = false;
         if (title != null && title.contains("/")) {
             isTitleContainsPath =true;
-            List<String> pathParts = Arrays.asList(title.split("/")).stream()
+            List<String> pathParts = Arrays.stream(title.split("/"))
                     .filter(Objects::nonNull)
                     .filter(item -> !item.isEmpty())
                     .collect(Collectors.toCollection(ArrayList::new));
@@ -53,7 +55,7 @@ public class FileNameBuilder {
         if (title != null) {
             fileNameBuilder.append(title);
         } else {
-            fileNameBuilder.append(media.getId());
+            fileNameBuilder.append(mediaItem.mediaId);
         }
 
         if (suffix != null) {

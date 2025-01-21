@@ -3,6 +3,7 @@ package com.cappielloantonio.tempo.service.export;
 import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Environment;
 import android.widget.Toast;
 
@@ -13,6 +14,8 @@ import androidx.media3.common.util.UnstableApi;
 
 import com.cappielloantonio.tempo.subsonic.models.Child;
 import com.cappielloantonio.tempo.util.MappingUtil;
+import com.cappielloantonio.tempo.util.MusicUtil;
+import com.cappielloantonio.tempo.util.Preferences;
 
 import java.util.Objects;
 
@@ -36,8 +39,11 @@ public class Exporter {
         Objects.requireNonNull(downloadManager);
     }
 
-    public void exportMedia(@NonNull Child media){
-        Objects.requireNonNull(media);
+    /**
+     * <p>Export using {@link MediaItem}.</p>
+     */
+    public void exportMedia(@NonNull MediaItem mediaItem){
+        Objects.requireNonNull(mediaItem);
 
         // Validationg all necessary permissions
         Validator validator = new Validator();
@@ -45,11 +51,8 @@ public class Exporter {
 
         // Getting pretty name for file
         String fileName = new FileNameBuilder()
-                .media(media)
+                .mediaItem(mediaItem)
                 .build();
-
-        // Mapping sets all necessary fields
-        MediaItem mediaItem = MappingUtil.mapDownload(media);
 
         // Constructing request to DownloadManager
         DownloadManager.Request request = new DownloadManager.Request(mediaItem.requestMetadata.mediaUri)

@@ -1,12 +1,24 @@
 package com.cappielloantonio.tempo.service.export;
 
 
-import com.cappielloantonio.tempo.subsonic.models.Child;
+import static org.mockito.Mockito.when;
+
+import android.os.Bundle;
+
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.MediaMetadata;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class FileNameBuilderTest {
+
+    @Mock
+    Bundle extras;
 
     /**
      * <p>Title is present, artist is present, suffix is present.</p>
@@ -18,46 +30,26 @@ public class FileNameBuilderTest {
          */
         String anyMediaId = "123";
 
-        Child media = new Child(
-                anyMediaId,
-                null,
-                false,
-                "Test Title",
-                null,
-                "Test Artist",
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                "mp3",
-                null,
-                null,
-                null,
-                null,
-                null,
-                false,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-                );
+        MediaMetadata mediaMetadata = new MediaMetadata.Builder()
+                .setTitle("Test Title")
+                .setArtist("Test Artist")
+                .setExtras(extras)
+                .build();
+
+        MediaItem mediaItem = new MediaItem.Builder()
+                .setMediaId(anyMediaId)
+                .setMediaMetadata(mediaMetadata)
+                .build();
+
+        when(extras.getString("suffix"))
+                .thenReturn("mp3");
 
 
         /*
         When
          */
         String resultFileName = new FileNameBuilder()
-                .media(media)
+                .mediaItem(mediaItem)
                 .build();
 
 
@@ -84,46 +76,26 @@ public class FileNameBuilderTest {
          */
         String anyMediaId = "123";
 
-        Child media = new Child(
-                anyMediaId,
-                null,
-                false,
-                "/path/to/file/with/title",
-                null,
-                "[Unknown Artist]",
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                "mp3",
-                null,
-                null,
-                null,
-                null,
-                null,
-                false,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        MediaMetadata mediaMetadata = new MediaMetadata.Builder()
+                .setTitle("/path/to/file/with/title")
+                .setArtist("[Unknown Artist]")
+                .setExtras(extras)
+                .build();
+
+        MediaItem mediaItem = new MediaItem.Builder()
+                .setMediaId(anyMediaId)
+                .setMediaMetadata(mediaMetadata)
+                .build();
+
+        when(extras.getString("suffix"))
+                .thenReturn("mp3");
 
 
         /*
         When
          */
         String resultFileName = new FileNameBuilder()
-                .media(media)
+                .mediaItem(mediaItem)
                 .build();
 
 
